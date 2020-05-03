@@ -20,9 +20,9 @@ type Employess struct {
 }
 
 // NewEmployee constructor - return pointer to Employees structure
-func NewEmployee() (*Employess, error) {
+func NewEmployee(path string) (*Employess, error) {
 
-	jsonFile, err := os.Open("../configs/employees.json")
+	jsonFile, err := os.Open(path)
 	if err != nil {
 		fmt.Println(err)
 	}

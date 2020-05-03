@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"runtime"
@@ -15,8 +16,10 @@ func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 func main() {
-
-	config, _ := internal.NewConfig("../configs/config.yml")
+	configPtr := flag.String("config", "", "Config path")
+	employeePtr := flag.String("employee", "", "Employee list path")
+	flag.Parse()
+	config, _ := internal.NewConfig(*configPtr)
 	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d",
 		config.Database.Host,
 		config.Database.Username,
@@ -28,7 +31,7 @@ func main() {
 		log.Fatal("Open connection failed:", err.Error())
 	}
 	defer conn.Close()
-	emp, _ := internal.NewEmployee()
+	emp, _ := internal.NewEmployee(*employeePtr)
 	emp.ReadAll()
 
 	payments := internal.NewPayments(conn, emp, config)
