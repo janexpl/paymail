@@ -113,7 +113,7 @@ func (pCon *PaymentsController) SendEmail(name string, wg *sync.WaitGroup) {
 		to := []string{pCon.employessList.GetEmail(name)}
 		msgString := fmt.Sprintf("To: %s\r\n"+
 			"Subject: Raport zaległych faktur\r\n"+
-			"Content-Type:	text/html; charset=UTF-8'r\n"+
+			"Content-Type:	text/html; charset=UTF-8\r\n"+
 			"\r\n"+
 			"<html><body>\r\n"+
 			"Witaj %s <br />\n"+
@@ -133,7 +133,7 @@ func (pCon *PaymentsController) SendEmail(name string, wg *sync.WaitGroup) {
 			name,
 			msgTable,
 			sum)
-		
+
 		addr := fmt.Sprintf("%s:%d", pCon.config.Email.Hostname, pCon.config.Email.Port)
 		err := smtp.SendMail(addr, auth, pCon.config.Email.Username, to, []byte(msgString))
 		if err != nil {
