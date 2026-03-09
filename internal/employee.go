@@ -3,7 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -21,7 +21,7 @@ type EmployeeDirectory struct {
 
 // NewEmployeeDirectory loads employees from disk and validates the payload.
 func NewEmployeeDirectory(path string) (*EmployeeDirectory, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
