@@ -4,50 +4,66 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
+	"strings"
 )
 
-// Employee structure
+// Employee describes a report recipient.
 type Employee struct {
 	Username string `json:"name"`
 	Email    string `json:"email"`
 }
 
-// Employess structure with Employee array, and values of json query
-type Employess struct {
+// EmployeeDirectory stores employees and lookup indexes.
+type EmployeeDirectory struct {
 	Employees []Employee `json:"employees"`
-	values    []byte
+	byName    map[string]string
 }
 
-// NewEmployee constructor - return pointer to Employees structure
-func NewEmployee(path string) (*Employess, error) {
-
-	jsonFile, err := os.Open(path)
+// NewEmployeeDirectory loads employees from disk and validates the payload.
+func NewEmployeeDirectory(path string) (*EmployeeDirectory, error) {
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	defer jsonFile.Close()
 
-	return &Employess{
-		values: byteValue,
-	}, nil
+	return ParseEmployeeDirectory(data)
 }
 
-// ReadAll - reading all records from json file
-func (emp *Employess) ReadAll() (*Employess, error) {
-	var employees Employess
-	json.Unmarshal(emp.values, &employees)
-	emp.Employees = employees.Employees
-	return &employees, nil
-}
+// ParseEmployeeDirectory unmarshals and validates the employee list.
+func ParseEmployeeDirectory(data []byte) (*EmployeeDirectory, error) {
+	var directory EmployeeDirectory
+	if err := json.Unmarshal(data, &directory); err != nil {
+		return nil, err
+	}
 
-// GetEmail - search email in structure at given name
-func (emp *Employess) GetEmail(name string) string {
-	for _, employee := range emp.Employees {
-		if employee.Username == name {
-			return employee.Email
+	directory.byName = make(map[string]string, len(directory.Employees))
+	for idx, employee := range directory.Employees {
+		employee.Username = strings.TrimSpace(employee.Username)
+		employee.Email = strings.TrimSpace(employee.Email)
+
+		if employee.Username == "" {
+			return nil, fmt.Errorf("employee at index %d is missing name", idx)
 		}
+		if employee.Email == "" {
+			return nil, fmt.Errorf("employee %q is missing email", employee.Username)
+		}
+		if _, exists := directory.byName[employee.Username]; exists {
+			return nil, fmt.Errorf("duplicate employee name %q", employee.Username)
+		}
+
+		directory.Employees[idx] = employee
+		directory.byName[employee.Username] = employee.Email
 	}
-	return ""
+
+	return &directory, nil
+}
+
+// EmailByName returns employee email for a given username.
+func (dir *EmployeeDirectory) EmailByName(name string) (string, bool) {
+	if dir == nil {
+		return "", false
+	}
+
+	email, ok := dir.byName[name]
+	return email, ok
 }
